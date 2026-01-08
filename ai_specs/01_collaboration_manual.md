@@ -28,6 +28,16 @@
 - [ ] 插件 ID（`metadata.name`）是否符合反向域名规范（如 `run.halo.plugin.todo`）且未被占用？
 - [ ] 技术栈是否锁定为 Java 17+ 和 Console UI (Vue 3)？
 
+### 1.4 OpenSpec 目录结构规范
+本项目遵循 OpenSpec 标准进行协作。
+
+*   **`.hps/current_state/`**: 当前系统的完整规格说明（Source of Truth）。
+*   **`.hps/changes/`**: 正在进行的变更（Feature Branches）。
+    *   **`<feature-name>/`**: 特定功能的变更集。
+        *   **`proposal.md`**: 需求意图与初步分析。
+        *   **`tasks.md`**: 详细的实现任务拆解（Model/Logic/UI）。
+        *   **`specs/`**: 具体的规格变更文件（如 `extension_todo.md`）。
+
 ---
 
 ## 2. 需求提出（提需）规范
@@ -91,10 +101,12 @@
 - **垂直切片**：尽量按“端到端”拆解（Extension 定义 -> Reconciler 逻辑 -> UI 界面）。
 
 ### 4.2 Halo 插件结构级拆解
-1.  **Model Task**：定义 `extension/v1alpha1/MyKind.java`。
-2.  **Logic Task**：编写 `MyKindReconciler` 或 `Service`。
-3.  **API Task**：自定义 Controller (RouterFunction)。
-4.  **UI Task**：编写 Console 前端组件及路由配置。
+此拆解对应 `tasks.md` 文件内容：
+
+1.  **Model Task**: 定义 `extension/v1alpha1/MyKind.java`。
+2.  **Logic Task**: 编写 `MyKindReconciler` 或 `Service`。
+3.  **API Task**: 自定义 Controller (RouterFunction)。
+4.  **UI Task**: 编写 Console 前端组件及路由配置。
 
 ---
 

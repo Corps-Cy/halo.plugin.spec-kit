@@ -25,9 +25,13 @@ jobs:
         run: |
           VERSION=$(node -p "require('./package.json').version")
           NAME=$(node -p "require('./package.json').name")
+          # Use || true to prevent failure if package doesn't exist yet
           NPM_VERSION=$(npm view "$NAME" version 2>/dev/null || echo "0.0.0")
           
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          
+          echo "Current: $VERSION"
+          echo "NPM: $NPM_VERSION"
           
           if [ "$VERSION" != "$NPM_VERSION" ]; then
             echo "changed=true" >> $GITHUB_OUTPUT
@@ -37,7 +41,8 @@ jobs:
 
       - name: Publish to NPM
         if: steps.check_version.outputs.changed == 'true'
-        run: npm publish
+        # Explicitly set access public for scoped packages
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 

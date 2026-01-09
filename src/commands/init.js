@@ -1,9 +1,10 @@
 const fs = require('fs');
 const path = require('path');
-const { TaskRunner, selectOption, colors } = require('../core/ui');
+const { TaskRunner, selectOption, colors, log } = require('../core/ui');
 const { getHaloContext, generateContextContent, HPS_DIR } = require('../core/utils');
 const templates = require('../data/templates');
 const { t, setLang, getLang } = require('../data/locales');
+const cmdStart = require('./start');
 
 async function cmdInit(args) {
     const runner = new TaskRunner();
@@ -50,6 +51,9 @@ async function cmdInit(args) {
             path.join(hpsDir, 'changes'),
             path.join(hpsDir, 'prompts')
         ].forEach(d => fs.mkdirSync(d, { recursive: true }));
+        
+        // Generate Project Spec
+        fs.writeFileSync(path.join(hpsDir, 'project.md'), templates.hpsProjectSpec(projectName || 'MyPlugin'));
     });
 
     // --- Step 4: AI Configuration ---
@@ -57,9 +61,8 @@ async function cmdInit(args) {
         const options = [
             { label: "Gemini (Google)", value: "gemini", description: t('opt_gemini') },
             { label: "Cursor IDE", value: "cursor", description: t('opt_cursor') },
-            { label: "GitHub Copilot", value: "copilot", description: t('opt_copilot') },
-            { label: "Ollama / Local LLM", value: "ollama", description: t('opt_ollama') },
-            { label: "General", value: "general", description: t('opt_general') }
+            { label: "Claude Code", value: "claude", description: "Launch with Claude CLI" },
+            { label: "General (Skip)", value: "general", description: t('opt_general') }
         ];
 
         selectedTool = await selectOption(t('select_ai'), options);
@@ -81,58 +84,44 @@ async function cmdInit(args) {
         };
 
         if (selectedTool === 'cursor') {
-            // Combine context with Cursor Rules
             const rules = templates.cursorRules(getLang()) + "\n\n" + fullContext;
             write('.cursorrules', rules);
         } else {
-            // Generate HPS.md for general AI CLI integration
+            // General / Gemini / Claude
             const hpsContext = templates.hpsMd(projectName || 'halo-plugin');
-            write('HPS.md', hpsContext);
-
-            // Create a convenience script to start Gemini with context
-            const startScript = `#!/bin/bash
-# Check if gemini is installed
-if ! command -v gemini &> /dev/null; then
-    echo "❌ 'gemini' command not found. Please install the CLI from geminicli.com"
-    exit 1
-fi
-
-echo "🚀 Starting Gemini with HPS Context..."
-echo "ℹ️  Tip: Type '/hps' to see available commands (if supported) or just ask the AI."
-
-# Try to pass the context as the first argument (standard pattern)
-# If your CLI uses a different flag (like -s or --system), please edit this line.
-gemini "$(cat HPS.md)"
-`;
-            write('start_ai.sh', startScript);
-            try { fs.chmodSync(path.join(targetDir, 'start_ai.sh'), '755'); } catch(e){}
-
-            // Combine context with System Prompt for those that need it
+            write('HPS.md', hpsContext + "\n\n" + fullContext);
             const prompt = templates.systemPrompt(getLang()) + "\n\n" + fullContext;
-            
-            if (selectedTool === 'ollama') {
-                write(path.join(HPS_DIR, 'Modelfile'), `FROM llama3\nSYSTEM """\n${prompt}\n"""`);
-            } else if (selectedTool === 'copilot') {
-                write('.github/copilot-instructions.md', prompt);
-            } else {
-                // Gemini or General
-                write(path.join(HPS_DIR, 'prompts/SYSTEM_INSTRUCTION.md'), prompt);
-            }
+            write(path.join(HPS_DIR, 'prompts/SYSTEM_INSTRUCTION.md'), prompt);
         }
     });
 
-    // --- Step 6: Future Initialization Steps (Placeholder) ---
-    /* 
-       TODO: Add additional initialization steps here.
-       Example:
-       runner.addTask("Setup Git Hooks", async () => { ... });
-    */
-    
     await runner.run();
     
+    // --- Step 6: Seamless Launch (New Feature) ---
+    if (selectedTool !== 'general') {
+        const shouldLaunch = await selectOption(`
+✨ Setup Complete! Launch ${selectedTool} environment now?`, [
+            { label: "Yes, launch it! 🚀", value: "yes", description: "Start developing immediately" },
+            { label: "No, later", value: "no", description: "I will run 'hps start' later" }
+        ]);
+
+        if (shouldLaunch === 'yes') {
+            console.log(`
+${colors.cyan}Switching context to ${targetDir}...${colors.reset}`);
+            try {
+                process.chdir(targetDir);
+                await cmdStart([selectedTool]); // Invoke start logic directly
+            } catch (err) {
+                log.error(`Failed to launch: ${err.message}`);
+            }
+            return; // Exit after launch
+        }
+    }
+
     if (projectName) {
         console.log(`
 ${colors.green}${t('project_ready')} cd ${projectName}${colors.reset}`);
+        console.log(`${colors.dim}Run 'hps start' to begin whenever you are ready.${colors.reset}`);
     }
 }
 

@@ -2,10 +2,15 @@
   "name": "halo-plugin-spec-kit",
   "version": "1.0.0",
   "description": "Halo Plugin Specification Kit CLI",
-  "main": "hps.js",
+  "main": "bin/hps.js",
   "bin": {
-    "hps": "./hps.js"
+    "hps": "./bin/hps.js"
   },
+  "files": [
+    "bin",
+    "src",
+    "resources"
+  ],
   "engines": {
     "node": ">=14.0.0"
   },

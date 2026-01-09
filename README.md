@@ -5,56 +5,56 @@ It turns your vague ideas into professional, high-quality plugin code using **Ag
 
 ![HPS Logo](https://img.shields.io/badge/HPS-v1.0.0-cyan) ![License](https://img.shields.io/badge/License-MIT-green)
 
+[中文文档](README_zh.md)
+
 ## ✨ Core Features
 
-*   **🤖 AI Architect Mode**: Not just a coder. HPS acts as a Senior Product Manager to help you draft comprehensive Feature Specs (`hps new`).
-*   **🧠 Smart Context**: Automatically injects only the relevant Halo technical documentation into your prompts, saving 90% of tokens (`hps code`).
-*   **🌍 Robust i18n**: Full support for English and Chinese workflows.
-*   **🚀 Seamless Launch**: One command to initialize a project and launch your AI environment (`hps init`).
+*   **🤖 AI Architect Mode**: HPS acts as a **Senior Product Manager**. It doesn't just write code; it helps you brainstorm, analyze UX, and draft professional Feature Specs.
+*   **🧠 Smart Context**: Automatically identifies your needs and injects **only the relevant** Halo technical documentation, saving 90% of tokens.
+*   **🌍 Robust i18n**: Native support for **English and Chinese**. The AI adapts its thinking language based on your preference.
+*   **🚀 Seamless Workflow**: One command to initialize -> launch AI -> start coding.
 
 ## 📦 Installation
 
-### Option 1: Install from NPM (Recommended)
 ```bash
 npm install -g halo-plugin-spec-kit
 ```
 
-### Option 2: Install from Source
+## 🚀 Quick Start (Chat-Driven Development)
+
+**You don't need to remember complex commands. Just chat with the AI.**
+
+### 1. Initialize & Launch
 ```bash
-git clone https://github.com/<your-username>/halo.plugin.spec-kit.git
-cd halo.plugin.spec-kit
-npm link
+hps init my-awesome-plugin
+# Follow the wizard to select 'zh/en' and your AI tool (Cursor/Gemini).
+# It will automatically launch the AI environment for you.
 ```
 
-## 🚀 Quick Start
+### 2. "I want a feature..."
+In your AI Chat (Cursor/Gemini), just say:
+> **"I want to build a Daily Check-in feature."**
 
-### 1. Initialize a Project
-```bash
-hps init my-plugin
-cd my-plugin
-```
-*Follow the wizard to select your language (zh/en) and AI tool (Cursor/Gemini).*
+### 3. AI Takes Over
+The AI will automatically:
+1.  Run `hps new daily-checkin`.
+2.  **Draft a professional Product Spec** for you (Data Models, UX Flow, Permissions).
+3.  Ask for your review.
 
-### 2. Design a Feature (Product Mode)
-Tell the AI (or run manually):
-```bash
-hps new daily-checkin
-```
-*The AI will read the generated Spec template and help you fill in the details (UX, Data Models, Permissions).*
+### 4. "Go ahead."
+Once you approve, the AI will:
+1.  Run `hps code daily-checkin`.
+2.  **Smartly load Halo docs** (e.g., *Reconciler Guide*, *UI Components*).
+3.  Generate production-ready Java & Vue code.
 
-### 3. Generate Code (Dev Mode)
-Once the Spec is ready:
-```bash
-hps code daily-checkin
-```
-*The AI will read the context and generate the implementation code.*
+## 🛠 Manual Commands
 
-## 🛠 Commands
+If you prefer manual control:
 
-*   `hps init [name]`: Initialize a new project and AI context.
-*   `hps new <feature>`: Draft a new feature specification.
-*   `hps code <feature>`: Generate coding prompts based on specs.
-*   `hps start`: Launch the AI environment (Cursor/Gemini).
+*   `hps init [name]`: Create project & setup AI context.
+*   `hps start`: Launch AI environment (if you closed it).
+*   `hps new <feature>`: AI drafts a Spec.
+*   `hps code <feature>`: AI generates Code.
 
 ## 📄 License
 

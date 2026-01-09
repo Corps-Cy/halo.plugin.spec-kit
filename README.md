@@ -1,61 +1,97 @@
 # Halo Plugin Spec Kit (HPS)
 
-A powerful AI-driven CLI toolkit for developing **Halo 2.x Plugins**. 
-It turns your vague ideas into professional, high-quality plugin code using **Agentic Workflow** and **Product Thinking**.
+> **The AI-Native Infrastructure for Halo 2.x Plugin Development**
 
-![HPS Logo](https://img.shields.io/badge/HPS-v1.0.0-cyan) ![License](https://img.shields.io/badge/License-MIT-green)
+[![NPM Version](https://img.shields.io/npm/v/@cysupper/halo-plugin-spec-kit?color=cyan)](https://www.npmjs.com/package/@cysupper/halo-plugin-spec-kit)
+![License](https://img.shields.io/badge/License-MIT-green)
+![Node](https://img.shields.io/badge/Node-%3E%3D14-blue)
 
-[中文文档](README_zh.md)
+[🇨🇳 中文文档](README_zh.md) | [🐞 Report Issue](https://github.com/Corps-Cy/halo.plugin.spec-kit/issues)
 
-## ✨ Core Features
+HPS is not just a CLI; it is an **AI Product Architect** that lives in your terminal. It bridges the gap between your vague ideas ("I want a check-in feature") and production-ready Halo plugin code (Reactive, Extension-based, Secure).
 
-*   **🤖 AI Architect Mode**: HPS acts as a **Senior Product Manager**. It doesn't just write code; it helps you brainstorm, analyze UX, and draft professional Feature Specs.
-*   **🧠 Smart Context**: Automatically identifies your needs and injects **only the relevant** Halo technical documentation, saving 90% of tokens.
-*   **🌍 Robust i18n**: Native support for **English and Chinese**. The AI adapts its thinking language based on your preference.
-*   **🚀 Seamless Workflow**: One command to initialize -> launch AI -> start coding.
+---
+
+## 🌟 Why HPS?
+
+*   **Product Thinking**: The AI helps you draft professional specs (UX, Data Models, Permissions) before writing a single line of code.
+*   **Token Efficiency**: **Smart Context** technology injects ONLY relevant Halo docs (e.g., "Attachment Storage" when you ask for "Upload"), saving 90% of tokens.
+*   **Halo Native**: Enforces official best practices (Project Reactor, Reconciler Pattern).
+
+---
+
+## 🧩 Feature Matrix
+
+| Feature | Status | Description |
+| :--- | :---: | :--- |
+| **Agentic Workflow** | ✅ | Init -> Auto-Spec -> Auto-Code loop. |
+| **Smart Context** | ✅ | Dynamic knowledge injection based on intent keywords. |
+| **Seamless Launch** | ✅ | Auto-launch AI environment after init. |
+| **Cross-Platform** | ✅ | macOS, Windows, Linux supported. |
+
+### 🤖 AI Support
+| AI Tool | Status | Integration Level |
+| :--- | :---: | :--- |
+| **Cursor IDE** | ✅ | **L4 (Best)**: Full auto-execution of commands. |
+| **Gemini CLI** | ✅ | **L4 (Best)**: Pipe-based context injection. |
+| **GitHub Copilot** | ✅ | L2: Prompt injection via `.github/instructions`. |
+| **Ollama** | ✅ | L2: Local LLM support via `Modelfile`. |
+| *Claude Code* | 🚧 | *Coming Soon* |
+| *DeepSeek API* | 🚧 | *Coming Soon* |
+
+### 🌍 Language Support
+| Language | Status | Note |
+| :--- | :---: | :--- |
+| **English** | ✅ | Default. |
+| **Chinese (中文)** | ✅ | Native support for prompts & UI. |
+| *Japanese* | 🚧 | *Planned* |
+| *Korean* | 🚧 | *Planned* |
+
+---
 
 ## 📦 Installation
 
 ```bash
-npm install -g halo-plugin-spec-kit
+# Install globally via NPM
+npm install -g @cysupper/halo-plugin-spec-kit
 ```
 
-## 🚀 Quick Start (Chat-Driven Development)
+## 🚀 Usage Guide
 
-**You don't need to remember complex commands. Just chat with the AI.**
-
-### 1. Initialize & Launch
+### 1. Initialize Project
 ```bash
 hps init my-awesome-plugin
-# Follow the wizard to select 'zh/en' and your AI tool (Cursor/Gemini).
-# It will automatically launch the AI environment for you.
 ```
+*Follow the wizard to select your language (zh/en) and AI tool. HPS will automatically launch the environment for you.*
 
 ### 2. "I want a feature..."
 In your AI Chat (Cursor/Gemini), just say:
 > **"I want to build a Daily Check-in feature."**
 
-### 3. AI Takes Over
-The AI will automatically:
-1.  Run `hps new daily-checkin`.
-2.  **Draft a professional Product Spec** for you (Data Models, UX Flow, Permissions).
-3.  Ask for your review.
+### 3. AI Architect Mode (Draft)
+The AI will automatically run `hps new` and **draft a professional Product Spec** for you, covering:
+*   **GVK Models**: `CheckInRecord`
+*   **Extension Points**: `Console Dashboard`, `Theme Injection`
+*   **UX Flow**: Button interaction & Feedback
 
-### 4. "Go ahead."
-Once you approve, the AI will:
-1.  Run `hps code daily-checkin`.
-2.  **Smartly load Halo docs** (e.g., *Reconciler Guide*, *UI Components*).
-3.  Generate production-ready Java & Vue code.
+### 4. AI Developer Mode (Code)
+Once you approve the spec, the AI runs `hps code`. It smartly reads **only the relevant Halo technical docs** (e.g., *How to write a Reconciler*, *How to use UI Components*) and generates the code.
 
-## 🛠 Manual Commands
+---
 
-If you prefer manual control:
+## 🛠 Command Reference
 
-*   `hps init [name]`: Create project & setup AI context.
-*   `hps start`: Launch AI environment (if you closed it).
-*   `hps new <feature>`: AI drafts a Spec.
-*   `hps code <feature>`: AI generates Code.
+| Command | Description |
+| :--- | :--- |
+| `hps init [name]` | Initialize project, configure AI, and launch environment. |
+| `hps start` | Manually launch the AI environment (if you closed it). |
+| `hps new <feat>` | (Agent Use) Draft a feature specification. |
+| `hps code <feat>` | (Agent Use) Generate coding prompts with smart context. |
+
+## 🤝 Contributing
+
+We welcome contributions! Please fork the repository and submit a Pull Request.
 
 ## 📄 License
 
-MIT
+MIT © [Corps-Cy](https://github.com/Corps-Cy)

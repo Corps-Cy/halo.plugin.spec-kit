@@ -1,7 +1,7 @@
 {
-  "name": "halo-plugin-spec-kit",
+  "name": "@cysupper/halo-plugin-spec-kit",
   "version": "1.0.0",
-  "description": "Halo Plugin Specification Kit CLI",
+  "description": "Halo Plugin Specification Kit CLI - AI-Driven Plugin Development",
   "main": "bin/hps.js",
   "bin": {
     "hps": "./bin/hps.js"
@@ -14,5 +14,24 @@
   "engines": {
     "node": ">=14.0.0"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Corps-Cy/halo.plugin.spec-kit.git"
+  },
+  "homepage": "https://github.com/Corps-Cy/halo.plugin.spec-kit#readme",
+  "bugs": {
+    "url": "https://github.com/Corps-Cy/halo.plugin.spec-kit/issues"
+  },
+  "keywords": [
+    "halo",
+    "plugin",
+    "cli",
+    "ai",
+    "generator",
+    "spec-driven"
+  ]
 }

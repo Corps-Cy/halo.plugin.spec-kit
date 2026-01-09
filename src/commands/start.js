@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
-const { colors, log, selectOption } = require('../core/ui');
+const { colors, log, selectOption } = require('../core/ui/index');
 const { HPS_DIR, getHaloContext, generateContextContent, readFileSafe, loadHpsConfig, copyToClipboard } = require('../core/utils');
 const templates = require('../data/templates');
 const { t } = require('../data/locales');
@@ -9,7 +9,6 @@ const { t } = require('../data/locales');
 async function cmdStart(args) {
     const config = loadHpsConfig();
 
-    // 1. Determine AI Tool
     let aiTool = (args && args[0]) || config.ai_tool;
     if (!aiTool || aiTool === 'general') {
         aiTool = await selectOption(t('select_ai'), [
@@ -19,7 +18,6 @@ async function cmdStart(args) {
         ]);
     }
 
-    // 2. Prepare Context
     if (!fs.existsSync('HPS.md')) {
         const projectName = config.project_name || path.basename(process.cwd());
         fs.writeFileSync('HPS.md', templates.hpsMd(projectName));
@@ -29,7 +27,6 @@ async function cmdStart(args) {
     const technicalContext = generateContextContent(contextData); 
     const fullPrompt = `${hpsInstructions}\n\n${technicalContext}`;
 
-    // 3. Launch Tool
     console.log(`${colors.bright}${t('launching_ai')}: ${aiTool}...${colors.reset}`);
 
     if (aiTool === 'cursor') {
@@ -39,27 +36,19 @@ async function cmdStart(args) {
         spawn('cursor', ['.'], { stdio: 'inherit', shell: true });
     } 
     else if (aiTool === 'gemini') {
-        // --- NEW ROBUST STRATEGY FOR GEMINI ---
-        // We avoid shell pipes like 'cat | gemini' which are brittle.
-        // Instead, we spawn gemini and manually write to its stdin.
-        
-        console.log(`${colors.cyan}ℹ Injecting context into Gemini session...${colors.reset}`);
+        // Fallback to Clipboard strategy for maximum stability
+        const tempContextPath = path.join(HPS_DIR, 'bootstrap_context.md');
+        fs.writeFileSync(tempContextPath, fullPrompt);
 
-        const child = spawn('gemini', [], {
-            stdio: ['pipe', 'inherit', 'inherit'], // Pipe STDIN, inherit STDOUT/STDERR
-            shell: true
-        });
-
-        // Write context
-        child.stdin.write(fullPrompt + '\n');
-        
-        // CRITICAL: Connect our terminal's stdin to Gemini's stdin
-        // so you can keep typing.
-        process.stdin.pipe(child.stdin);
-
-        child.on('exit', (code) => {
-            process.exit(code);
-        });
+        if (copyToClipboard(fullPrompt)) {
+            console.log(`\n${colors.green}✔ ${t('cmd_copied')}${colors.reset}`);
+            console.log(`${colors.yellow}Please run 'gemini' manually and paste (Cmd+V) the context.${colors.reset}\n`);
+        } else {
+            console.log(`\n${colors.yellow}${t('manual_launch_tip')}${colors.reset}`);
+            console.log(`\n    cat "${tempContextPath}" | gemini\n`);
+        }
+        // Exit to let user take over terminal
+        process.exit(0);
     }
     else if (aiTool === 'claude') {
         const tempContextPath = path.join(HPS_DIR, 'claude_context.md');

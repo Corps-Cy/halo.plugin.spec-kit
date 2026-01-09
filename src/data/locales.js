@@ -47,7 +47,20 @@ const locales = {
         feature_name_required: "Feature name is required.",
         feature_exists: "Feature \"{name}\" already exists.",
         creating_workspace: "Creating workspace for \"{name}\"...",
-        workspace_created: "Workspace created at {path}"
+        workspace_created: "Workspace created at {path}",
+
+        // Prompt Templates
+        system_identity: "# SYSTEM IDENTITY: Halo Plugin Architect",
+        role_desc: "You are an expert in developing plugins for Halo 2.x.\nYour goal is to assist the user in designing and implementing high-quality, compliant plugins.",
+        kb_title: "# CORE KNOWLEDGE BASE",
+        master_spec_title: "## 1. Master Specification (CRITICAL)",
+        collab_title: "## 2. Collaboration Protocol",
+        doc_index_title: "## 3. Documentation Index (Available on Request)",
+        doc_index_desc: "I have access to the following technical summaries.\nIf the user asks for specific features (e.g., \"upload\"), refer to the relevant document ID from this list:",
+        instructions_title: "# INSTRUCTIONS",
+        inst_1: "1. Always follow the 'Spec-Driven' workflow: Discuss -> Spec -> Code.",
+        inst_2: "2. If I use 'hps' commands, understand I am using the Halo Plugin Spec CLI.",
+        inst_3: "3. Prioritize 'Reactive' and 'Asynchronous' patterns as per the Master Spec."
     },
     zh: {
         start_workflow: "🚀 开始初始化工作流...",
@@ -91,7 +104,20 @@ const locales = {
         feature_name_required: "必须输入功能名称。",
         feature_exists: "功能 \"{name}\" 已存在。",
         creating_workspace: "正在为 \"{name}\" 创建工作区...",
-        workspace_created: "工作区已创建于 {path}"
+        workspace_created: "工作区已创建于 {path}",
+
+        // Prompt Templates
+        system_identity: "# 系统身份: Halo 插件架构师",
+        role_desc: "你是 Halo 2.x 插件开发的顶级专家。\n你的目标是辅助用户设计并实现高质量、符合官方规范的插件。",
+        kb_title: "# 核心知识库",
+        master_spec_title: "## 1. 核心规范 (关键)",
+        collab_title: "## 2. 协作协议",
+        doc_index_title: "## 3. 技术文档索引 (按需查阅)",
+        doc_index_desc: "你可以访问以下技术总结文档。\n如果用户询问特定功能（如“上传”），请根据此列表引用相关的文档 ID：",
+        instructions_title: "# 指令",
+        inst_1: "1. 始终遵循 'Spec-Driven' 工作流：讨论 -> 规格 -> 代码。",
+        inst_2: "2. 如果我使用 'hps' 命令，请理解我正在使用 Halo Plugin Spec CLI。",
+        inst_3: "3. 根据核心规范，优先使用 'Reactive' (响应式) 和 'Asynchronous' (异步) 模式。"
     },
     ja: {
         start_workflow: "🚀 初期化ワークフローを開始...",
@@ -154,7 +180,7 @@ function getLang() {
 
 function init() {
     try {
-        const configPath = path.join(process.cwd(), '.hps', 'config.json');
+        const configPath = require('path').join(process.cwd(), '.hps', 'config.json');
         if (fs.existsSync(configPath)) {
             const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
             if (config.language) setLang(config.language);

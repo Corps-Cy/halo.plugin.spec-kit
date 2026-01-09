@@ -99,7 +99,11 @@ async function cmdInit(args) {
             write(path.join(HPS_DIR, 'prompts/SYSTEM_INSTRUCTION.md'), prompt);
             
             if (selectedTool === 'ollama') {
-                const modelfile = 'FROM llama3\nSYSTEM """\n' + prompt + '\n"""';
+                // Fix: Use template literal correctly for multi-line string
+                const modelfile = `FROM llama3
+SYSTEM """
+${prompt}
+"""`;
                 write(path.join(HPS_DIR, 'Modelfile'), modelfile);
             } else if (selectedTool === 'copilot') {
                 write('.github/copilot-instructions.md', prompt);

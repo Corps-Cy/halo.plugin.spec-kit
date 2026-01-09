@@ -8,7 +8,7 @@ const HPS_DIR = '.hps';
 
 function readFileSafe(filePath) {
     if (!fs.existsSync(filePath)) {
-        return `[Error: File ${filePath} not found]`
+        return ""; // Return empty string instead of error message to avoid pollution
     }
     return fs.readFileSync(filePath, 'utf8');
 }
@@ -43,10 +43,7 @@ function copyToClipboard(text) {
     }
 }
 
-// Helper to get resources path within the package
 function getResourcesPath() {
-    // Current: src/core/utils.js
-    // Target: resources/
     return path.join(__dirname, '../../resources');
 }
 
@@ -67,22 +64,27 @@ function getHaloContext() {
 
 function generateContextContent(context) {
     const lang = getLang();
-    const txt = locales[lang];
+    const txt = locales[lang] || locales['en'];
     
+    // Ensure no undefined values
+    const masterSpec = context.masterSpec || "";
+    const collabManual = context.collabManual || "";
+    const docIndex = context.docIndex || "";
+
     return `${txt.system_identity}
 ${txt.role_desc}
 
 ${txt.kb_title}
 
 ${txt.master_spec_title}
-${context.masterSpec}
+${masterSpec}
 
 ${txt.collab_title}
-${context.collabManual}
+${collabManual}
 
 ${txt.doc_index_title}
 ${txt.doc_index_desc}
-${context.docIndex}
+${docIndex}
 
 ${txt.instructions_title}
 ${txt.inst_1}
@@ -91,9 +93,7 @@ ${txt.inst_3}
 `;
 }
 
-// Smart Context Generation
 function getSmartContext(userRequirement) {
-    // 1. Locate docs inside the package
     const sourceDocsDir = path.join(getResourcesPath(), 'docs_summaries');
     
     if (!fs.existsSync(sourceDocsDir)) {
@@ -104,7 +104,6 @@ function getSmartContext(userRequirement) {
     const loadedDocs = new Set(coreDocs);
     const matchedKeywords = new Set();
 
-    // 2. Match Keywords
     knowledgeMap.forEach(entry => {
         const isMatch = entry.keywords.some(k => requirementLower.includes(k));
         if (isMatch) {
@@ -113,7 +112,6 @@ function getSmartContext(userRequirement) {
         }
     });
 
-    // 3. Read Content
     let combinedContent = "";
     let loadedCount = 0;
 
@@ -126,7 +124,6 @@ function getSmartContext(userRequirement) {
         }
     });
 
-    // 4. Add Index
     const allFiles = fs.readdirSync(sourceDocsDir).filter(f => f.endsWith('.md'));
     const skippedFiles = allFiles.filter(f => !loadedDocs.has(f));
     const indexContent = `\n\n# Other Available Docs (Not Loaded)\nAI can request these if needed:\n` + skippedFiles.map(f => `- ${f}`).join('\n');

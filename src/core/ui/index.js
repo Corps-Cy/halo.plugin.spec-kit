@@ -4,10 +4,8 @@ const ProgressBar = require('./components/ProgressBar');
 const SelectMenu = require('./components/SelectMenu');
 const { t } = require('../../data/locales');
 
-// Signals
 const BACK_SIGNAL = Symbol('BACK');
 
-// Colors
 const colors = {
     reset: "\x1b[0m",
     bright: "\x1b[1m",
@@ -23,9 +21,8 @@ const colors = {
 
 const renderer = new Renderer();
 
-// Global State
 const state = {
-    title: "",
+    // title: "", // REMOVED: Managed externally
     tasks: { total: 0, current: 0, name: "" },
     prompt: null, 
     done: false
@@ -33,7 +30,7 @@ const state = {
 
 function render() {
     let output = "";
-    if (state.title) output += `${state.title}\n`;
+    // Title is printed once at start, not re-rendered every frame to avoid clearing issues
     
     if (state.tasks.total > 0 && !state.done) {
         output += ProgressBar({
@@ -52,12 +49,10 @@ function render() {
             colors
         });
         
-        // Dynamic Footer with i18n
-        // Check visible step index
         const canGoBack = state.tasks.current > 1;
         const navHint = canGoBack 
-            ? t('nav_hint') // translated
-            : t('nav_hint_first'); // translated
+            ? t('nav_hint') 
+            : t('nav_hint_first');
             
         output += `\n${colors.dim}${navHint}${colors.reset}\n`;
     }
@@ -86,7 +81,7 @@ function cleanupInput() {
 }
 
 function handleKeypress(str, key) {
-    if (!state.prompt) return;
+    if (!state.prompt) return; 
     
     if (key.name === 'c' && key.ctrl) process.exit();
     
@@ -99,9 +94,7 @@ function handleKeypress(str, key) {
         render();
     }
     
-    // BACK Navigation
     if (key.name === 'left') {
-        // Prevent back on first step (Step 1)
         if (state.tasks.current <= 1) return;
         
         const resolve = state.prompt.resolve;
@@ -120,14 +113,7 @@ function handleKeypress(str, key) {
     }
 }
 
-// Helper to identify interactive tasks
-function isTaskInteractive(taskName) {
-    if (!taskName) return false;
-    return taskName.includes("Select") || taskName.includes("选择") || taskName.includes("言語") || taskName.includes("AI") || taskName.includes("Launch") || taskName.includes("启动");
-}
-
-// --- Public API ---
-
+// ... Logger ...
 const log = {
     step: () => {},
     success: () => {},
@@ -138,6 +124,11 @@ const log = {
         cleanupInput();
     }
 };
+
+function isTaskInteractive(taskName) {
+    if (!taskName) return false;
+    return taskName.includes("Select") || taskName.includes("选择") || taskName.includes("言語") || taskName.includes("AI") || taskName.includes("Launch") || taskName.includes("启动");
+}
 
 class TaskRunner {
     constructor() {
@@ -151,7 +142,9 @@ class TaskRunner {
     async run() {
         setupInput();
         renderer.hideCursor();
-        state.title = `\n${colors.bright}${colors.blue}${t('start_workflow') || "🚀 Starting..."}${colors.reset}\n`;
+        
+        // Print Title ONCE
+        console.log(`\n${colors.bright}${colors.blue}${t('start_workflow') || "🚀 Starting..."}${colors.reset}\n`);
         
         const visibleTasks = this.tasks.filter(t => !t.hidden);
         state.tasks.total = visibleTasks.length;
@@ -174,10 +167,8 @@ class TaskRunner {
             render(); 
 
             try {
-                // Execute Task
                 const result = await task.fn();
                 
-                // Check Back Signal
                 if (result === BACK_SIGNAL) {
                     let prevIndex = index - 1;
                     while (prevIndex >= 0) {

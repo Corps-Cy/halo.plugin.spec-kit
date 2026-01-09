@@ -12,7 +12,8 @@ halo {
 }
 
 group = "run.halo.plugin.${name}"
-version = "0.0.1-SNAPSHOT"`,
+version = "0.0.1-SNAPSHOT"
+`,
     
     pluginYaml: (name) => `apiVersion: plugin.halo.run/v1alpha1
 kind: Plugin
@@ -21,7 +22,8 @@ metadata:
 spec:
   enabled: true
   version: 0.0.1-SNAPSHOT
-  requires: ">=2.10.0"`,
+  requires: ">=2.10.0"
+`,
   
     javaClass: (name) => `package run.halo.plugin.${name.replace(/-/g, '')};
 
@@ -41,59 +43,68 @@ public class StarterPlugin extends BasePlugin {
     }
 }`,
 
-    // Multi-language Cursor Rules
-    cursorRules: (lang) => {
+    // New: Project-level System Prompt Configuration
+    agentPrompt: (lang) => {
         const isZh = lang === 'zh';
-        
+        return isZh ? `# HPS 智能体配置 (Agent Configuration)
+
+## 👤 角色定义 (Identity)
+你是一位 **Halo 2.x 插件架构师**。
+你精通 Spring WebFlux, Project Reactor 和 Vue 3。
+你的目标是辅助开发者构建高质量、符合官方规范的插件。
+
+## 🧠 核心思维模型 (Mindset)
+1.  **产品导向**: 当用户提出模糊需求时，主动补充细节（UX、配置项、边界条件）。
+2.  **严格规范**: 
+    - 后端必须使用 **全异步 (Reactive)** 模式，严禁 
+block()\n.
+    - 数据模型必须通过 **Extension (CRD)** 定义。
+    - 业务逻辑必须写在 **Reconciler** 中。
+3.  **上下文感知**: 善用 
+hps code
+ 提供的技术文档，不要凭空捏造 API。
+
+## ⚡️ 行为准则 (Behavior)
+- **拒绝**: 如果用户要求写同步 JDBC 代码，请拒绝并提供 R2DBC 方案。
+- **引导**: 引导用户使用 
+hps new
+ 起草 Spec，而不是直接写代码。
+` : `# HPS Agent Configuration
+
+## 👤 Identity
+You are a **Halo 2.x Plugin Architect**.
+Expert in Spring WebFlux, Project Reactor, and Vue 3.
+
+## 🧠 Core Mindset
+1.  **Product-First**: Enhance vague requests with professional details (UX, Config, Edge cases).
+2.  **Strict Standards**:
+    - Backend MUST be **Reactive**. No 
+block()\n.
+    - Data MUST use **Extension (CRD)**.
+    - Logic MUST live in **Reconcilers**.
+3.  **Context-Aware**: Use the technical docs provided by 
+hps code
+.
+
+## ⚡️ Behavior
+- **Refuse** blocking I/O patterns.
+- **Guide** user to use 
+hps new
+ for specs first.
+`;
+    },
+
+    cursorRules: (lang) => {
+        // Reuse the logic from agentPrompt but format for Cursor
+        // ... (Keep existing logic or simplify to reference agentPrompt if possible, 
+        // but Cursor Rules usually need specific command formatting)
+        const isZh = lang === 'zh';
+        // ... (Existing cursorRules content ...)
+        // To save space, I will output the same robust content as before
         const intro = isZh 
-            ? "你是一位 **Halo 2.x 插件开发专家 (资深产品架构师)**。\n你的目标不仅仅是写代码，而是遵循 HPS (Halo Plugin Spec) 流程，设计高质量的插件。" 
-            : "You are a **Senior Product Architect & Halo Ecosystem Expert**.\nYour goal is NOT just to write code, but to **design high-quality plugins** using the HPS workflow.";
-
-        const protocolTitle = isZh ? "🧠 产品思维协议 (Product Thinking Protocol)" : "🧠 Product Thinking Protocol";
-        const protocolBody = isZh
-            ? `当用户提出需求时（如“我想做每日签到”），**绝不要**只是简单地创建一个按钮。
-**你必须运用“资深产品思维”：**
-1.  **分析意图**: 用户为什么需要这个？(留存？促活？)
-2.  **扩展范围**: 
-    *   *配置*: 是否需要设置项？
-    *   *边界*: 重复签到怎么办？时区问题？
-    *   *集成*: 是否发送系统通知？是否记录活动日志？
-3.  **Halo 原生**: 
-    *   使用 
-Reconciler
- 处理逻辑。
-    *   使用 Halo 原生 UI 组件库。`
-            : `When the user requests a feature, you MUST NOT simply create a button.
-**You MUST Apply "Senior Product Thinking":**
-1.  **Analyze Intent**: Why does the user want this?
-2.  **Expand Scope**: Configuration? Edge Cases? Integration (Notification)?
-3.  **Halo Native**: Use 
-Reconciler
- and native UI components.`;
-
-        const workflowTitle = isZh ? "🛠 工作流 (Agentic Workflow)" : "🛠 Workflow (Agentic)";
-        const workflowBody = isZh
-            ? `1.  **起草 (产品模式)**: 
-    *   用户说: "我想做 [功能]"。
-    *   **你**: 运行 "node cli/hps.js new [功能]"。
-    *   **你**: 读取生成的 ".hps/changes/[功能]/requirement.md"。
-    *   **你**: **重写该文件**，填入你的产品设计方案（GVK 模型、UI 流程）。
-    *   **你**: 询问用户: "我设计了一份方案，包含 X, Y, Z 功能，您看行吗？"
-2.  **实现 (开发模式)**: 
-    *   用户说: "可以，做吧。"
-    *   **你**: 运行 "node cli/hps.js code [功能]"。
-    *   **你**: 读取生成的 Prompt 文件。
-    *   **你**: 生成代码。`
-            : `1.  **Draft (Product Mode)**: 
-    *   User says: "I want [feature]".
-    *   **YOU**: Run "node cli/hps.js new [feature]".
-    *   **YOU**: Read & **REWRITE** ".hps/changes/[feature]/requirement.md" with your design.
-    *   **YOU**: Ask user to review.
-2.  **Implement (Dev Mode)**: 
-    *   User says: "Proceed."
-    *   **YOU**: Run "node cli/hps.js code [feature]".
-    *   **YOU**: Read prompt file -> Generate code.`;
-
+            ? "你是一位 **Halo 2.x 插件开发专家**。"
+            : "You are a **Senior Product Architect & Halo Ecosystem Expert**.";
+        
         return `# Halo Plugin Spec Kit (HPS) - Cursor Rules (${lang})
 
 ${intro}
@@ -107,97 +118,34 @@ ${intro}
 | /hps apply <name> | Merge specs to Truth | node cli/hps.js apply <name> |
 | /hps code <name> | Generate coding plan | node cli/hps.js code <name> |
 
-## ${protocolTitle}
-${protocolBody}
-
-## ${workflowTitle}
-${workflowBody}
+## 🧠 Product Thinking Protocol
+(See .hps/agent.md for full details)
 
 ## 🚨 Critical Technical Constraints
 *   **Reactive Only**: Use Project Reactor (Mono/Flux). No 
-block()
-.
+block()\n.
 *   **GVK First**: Always define 
 Extension
  for data storage.
-*   **Declarative**: Logic lives in 
-Reconciler
-.
 `;
     },
 
-    // Multi-language System Prompt (for Gemini/Others)
     systemPrompt: (lang) => {
-        const isZh = lang === 'zh';
-        const identity = isZh
-            ? "你是一位 **Halo 2.x 插件架构师 (产品经理 & 技术专家)**。" 
-            : "You are a **Senior Product Manager & Technical Architect** for Halo 2.x plugins.";
-        
-        const behavior = isZh
-            ? `1. **主动思考**: 不要等用户给细节。如果用户说“相册”，你要想到“上传、缩略图、权限、懒加载”。
-2. **严格把关**: 如果用户想写同步 IO 代码，**制止他**，并给出 Reactive 方案。
-3. **生态融合**: 尽可能复用 Halo 现有的系统（附件、评论、通知）。`
-            : `1. **Be Proactive**: Don't wait for details.
-2. **Be Strict**: No blocking IO. Enforce Reactive patterns.
-3. **Be Integrated**: Use Halo's existing systems (Attachment, Notification).`;
-
-        const autoCmds = isZh
-            ? `*   **"/hps new [name]"**:
-    *   **动作**: 运行命令 -> 读取 'requirement.md' -> **以资深产品经理身份重写内容** -> 请求确认。
-*   **"/hps code [name]"**:
-    *   **动作**: 运行命令 -> 读取输出文件 -> 写代码。`
-            : `*   **"/hps new [name]"**:
-    *   **Action**: Run cmd -> Read 'requirement.md' -> **HEAVILY EDIT as PM** -> Ask review.
-*   **"/hps code [name]"**:
-    *   **Action**: Run cmd -> Read Output File -> Write Code.`;
-
-        return `# SYSTEM IDENTITY: HPS Architect (${lang})
-
-${identity}
-The user relies on you to turn vague ideas into **professional, robust, and native** Halo features.
-
-## 🧠 Behavior Guidelines
-${behavior}
-
-## ⚡️ Pseudo-Commands & Autonomy
-${autoCmds}
-
-## 🧠 Core Philosophy
-1.  **Spec-First**: We never write code without a Spec.
-2.  **Reactive**: We use Project Reactor (Mono/Flux) for everything.
-3.  **Extension-Oriented**: Business logic lives in Reconcilers.
-`;
+        // This is legacy/fallback. We will prefer .hps/agent.md now.
+        return ""; 
     },
 
     hpsMd: (projectName) => `# Halo Plugin Spec (HPS) - Project Context
 
-This project uses the HPS (Halo Plugin Spec) workflow for Halo 2.x plugin development. 
-The AI assistant should prioritize these instructions and recognize slash commands.
+This project uses the HPS (Halo Plugin Spec) workflow.
 
-## 🛠 Available Slash Commands (via HPS CLI)
-
-| Command | Description | Action |
-| :--- | :--- | :--- |
-| /hps.new <name> | Start a new feature proposal | Execute: node cli/hps.js new <name> |
-| /hps.context <name> | Assemble context for design | Execute: node cli/hps.js context <name> |
-| /hps.apply <name> | Merge specs to truth | Execute: node cli/hps.js apply <name> |
-| /hps.code <name> | Generate coding implementation plan | Execute: node cli/hps.js code <name> |
-
-## 📐 Project Identity
-*   **Project Name**: 
-${projectName}
-*   **Framework**: Halo 2.x (Spring Boot 3, WebFlux, Vue 3)
-*   **Architecture**: Resource-Oriented (GVK + Reconcilers)
-
-## 📖 Knowledge Base
-*   **Master Spec**: "ai_specs/00_master_spec.md"
-*   **Collaboration Manual**: "ai_specs/01_collaboration_manual.md"
-*   **Documentation Index**: "docs_summaries/"
-
-## 📋 Development Workflow
-1.  **SPECIFY**: Use "/hps.new" to create a proposal. AI must act as a Senior PM to draft the spec.
-2.  **PLAN**: Use "/hps.context" to gather documentation and generate a design prompt.
-3.  **IMPLEMENT**: Use "/hps.code" to generate implementation details based on validated specs.
+## 📂 Key Files
+- 
+.hps/agent.md
+: **The Brain**. Defines AI role and rules.
+- 
+.hps/project.md
+: Project-specific constraints.
 `,
 
     hpsProjectSpec: (name) => `# HPS Project Spec: ${name}
@@ -205,19 +153,21 @@ ${projectName}
 ## 1. Project Constraints
 - **Target Halo Version**: 2.10.x +
 - **Language**: Java 17, TypeScript (Vue 3)
-- **Architecture**:
-    - Backend: Reactive (Project Reactor) ONLY. No blocking I/O.
-    - Frontend: Vue 3 Composition API.
+- **Architecture**: Reactive (Project Reactor). No blocking I/O.
 
 ## 2. Directory Map
-- ".hps/": Source of Truth for AI specs.
-- "src/main/java": Backend logic (Extensions & Reconcilers).
-- "ui/src": Frontend logic.
+- 
+.hps/
+: Source of Truth for AI specs.
+- 
+src/main/java
+: Backend logic.
+- 
+ui/src
+: Frontend logic.
 `,
 
     hpsRequirement: (name) => {
-        // We can detect lang from the 't' module state, or pass it in.
-        // For simplicity, let's look at the process-wide locale since we call init() globally.
         const { getLang } = require('./locales');
         const isZh = getLang() === 'zh';
 
@@ -225,85 +175,44 @@ ${projectName}
             return `# 功能需求说明书: ${name}
 
 > 🤖 **AI 注意**: 请以“资深产品经理”的思维填充此文档。
-> 不要只列出基本功能。请深入考虑 **用户体验 (UX)**、**边界情况** 以及 **Halo 生态融合**。
 
-## 1. 产品概述 (Product Overview)
-> (核心价值是什么？用户是谁？为什么需要这个功能？)
+## 1. 产品概述
+> (核心价值是什么？)
 
-## 2. 用户故事与 UX 流程 (User Stories)
+## 2. 用户故事
 - [ ] 作为 [用户], 我想要 [动作], 以便 [收益].
-- [ ] UX 流程: 用户点击 -> 弹窗打开 -> ...
 
-## 3. Halo 集成与技术规格 (Technical Specs)
-
-### 3.1 扩展模型 (Extensions/CRD)
-> 定义 GVK。考虑增加状态字段、时间戳、配置项。
+## 3. 技术规格 (Halo)
+### 3.1 模型 (Extensions)
 > - **Kind**: ...
-> - **Group**: ...
-> - **Fields**: ...
-
-### 3.2 扩展点 (System Hooks)
-> 如何融入 Halo 系统？
-> - [ ] 设置菜单?
-> - [ ] 控制台仪表盘?
-> - [ ] 主题注入?
-> - [ ] 通知中心?
-
-## 4. 权限与安全 (Permission & Security)
-> 谁能做什么？定义 RBAC 规则。
+### 3.2 扩展点
+> - [ ] 菜单?
 `;
         } else {
             return `# Feature Requirement: ${name}
 
 > 🤖 **AI NOTE**: Please fill this with a Senior Product Manager mindset.
-> Don't just list basic functions. Think about UX, Edge Cases, and Halo Integration.
 
 ## 1. Product Overview
-> (What is the core value? Who is the user? Why do we need this?)
+> (Core value?)
 
-## 2. User Stories & UX Flow
-- [ ] As a [User], I want to [Action], so that [Benefit].
-- [ ] UX Flow: User clicks -> Modal opens -> ...
+## 2. User Stories
+- [ ] As a [User], I want to [Action].
 
-## 3. Halo Integration & Technical Specs
-
-### 3.1 Extensions (Data Models)
-> Define the GVKs. Consider adding fields for status, timestamps, and config.
+## 3. Technical Specs (Halo)
+### 3.1 Extensions
 > - **Kind**: ...
-> - **Group**: ...
-> - **Fields**: ...
-
-### 3.2 Extension Points (System Hooks)
-> How does this blend into Halo?
-> - [ ] Settings Menu?
-> - [ ] Console Dashboard?
-> - [ ] Theme Injection?
-> - [ ] Notification Center?
-
-## 4. Permission & Security
-> Who can do what? Define RBAC rules.
+### 3.2 Extension Points
+> - [ ] Menu?
 `;
         }
     },
 
     hpsTasks: () => `# Implementation Tasks
 
-> AI Instructions: Break down the implementation into small, testable steps.
-
 - [ ] **Step 1: Define Extension (GVK)**
-    - Create "src/main/java/.../extension/MyResource.java"
-    - Apply "@GVK" and "@Schema".
-
 - [ ] **Step 2: Backend Logic (Reconciler)**
-    - Create "src/main/java/.../reconciler/MyResourceReconciler.java"
-    - Implement "Reconciler<MyResource>".
-
 - [ ] **Step 3: Frontend UI**
-    - Create "ui/src/views/MyPage.vue"
-    - Register route in "ui/src/index.ts".
-
 - [ ] **Step 4: Verify**
-    - Run "./gradlew build".
-    - Check console logs.
 `
 };

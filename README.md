@@ -8,89 +8,73 @@
 
 [🇨🇳 中文文档](README_zh.md) | [🐞 Report Issue](https://github.com/Corps-Cy/halo.plugin.spec-kit/issues)
 
-HPS is not just a CLI; it is an **AI Product Architect** that lives in your terminal. It bridges the gap between your vague ideas ("I want a check-in feature") and production-ready Halo plugin code (Reactive, Extension-based, Secure).
-
----
-
-## 🌟 Why HPS?
-
-*   **Product Thinking**: The AI helps you draft professional specs (UX, Data Models, Permissions) before writing a single line of code.
-*   **Token Efficiency**: **Smart Context** technology injects ONLY relevant Halo docs (e.g., "Attachment Storage" when you ask for "Upload"), saving 90% of tokens.
-*   **Halo Native**: Enforces official best practices (Project Reactor, Reconciler Pattern).
-
----
-
-## 🧩 Feature Matrix
-
-| Feature | Status | Description |
-| :--- | :---: | :--- |
-| **Agentic Workflow** | ✅ | Init -> Auto-Spec -> Auto-Code loop. |
-| **Smart Context** | ✅ | Dynamic knowledge injection based on intent keywords. |
-| **Seamless Launch** | ✅ | Auto-launch AI environment after init. |
-| **Cross-Platform** | ✅ | macOS, Windows, Linux supported. |
-
-### 🤖 AI Support
-| AI Tool | Status | Integration Level |
-| :--- | :---: | :--- |
-| **Cursor IDE** | ✅ | **L4 (Best)**: Full auto-execution of commands. |
-| **Gemini CLI** | ✅ | **L4 (Best)**: Pipe-based context injection. |
-| **GitHub Copilot** | ✅ | L2: Prompt injection via `.github/instructions`. |
-| **Ollama** | ✅ | L2: Local LLM support via `Modelfile`. |
-| *Claude Code* | 🚧 | *Coming Soon* |
-| *DeepSeek API* | 🚧 | *Coming Soon* |
-
-### 🌍 Language Support
-| Language | Status | Note |
-| :--- | :---: | :--- |
-| **English** | ✅ | Default. |
-| **Chinese (中文)** | ✅ | Native support for prompts & UI. |
-| *Japanese* | 🚧 | *Planned* |
-| *Korean* | 🚧 | *Planned* |
+HPS is an **AI Product Architect** toolkit that turns your vague ideas into production-ready Halo 2.x plugins using **Agentic Workflow** and **Smart Context**.
 
 ---
 
 ## 📦 Installation
 
+We provide three ways to install HPS. **Option 1 is highly recommended.**
+
+### Option 1: Via NPM (Recommended ⭐)
+The easiest way to stay updated.
 ```bash
-# Install globally via NPM
 npm install -g @cysupper/halo-plugin-spec-kit
 ```
 
-## 🚀 Usage Guide
+### Option 2: Direct from GitHub
+Install directly using the GitHub URL (no clone needed).
+```bash
+npm install -g github:Corps-Cy/halo.plugin.spec-kit
+```
 
-### 1. Initialize Project
+### Option 3: Manual from Release (Offline/Dev)
+1. Download the latest `.zip` or `.tar.gz` from [GitHub Releases](https://github.com/Corps-Cy/halo.plugin.spec-kit/releases).
+2. Extract the archive.
+3. In the directory, run:
+```bash
+npm install -g .
+```
+
+---
+
+## 🚀 Quick Start (Chat-Driven)
+
+### 1. Initialize & Launch
 ```bash
 hps init my-awesome-plugin
 ```
-*Follow the wizard to select your language (zh/en) and AI tool. HPS will automatically launch the environment for you.*
+*Follow the wizard to setup 'zh/en' and your AI tool. HPS will auto-launch the AI for you.*
 
 ### 2. "I want a feature..."
 In your AI Chat (Cursor/Gemini), just say:
-> **"I want to build a Daily Check-in feature."**
+> **"I want to build a Article Reward feature."**
 
 ### 3. AI Architect Mode (Draft)
-The AI will automatically run `hps new` and **draft a professional Product Spec** for you, covering:
-*   **GVK Models**: `CheckInRecord`
-*   **Extension Points**: `Console Dashboard`, `Theme Injection`
-*   **UX Flow**: Button interaction & Feedback
+The AI automatically runs `hps new` and **drafts a professional spec** (Models, UX flow).
 
 ### 4. AI Developer Mode (Code)
-Once you approve the spec, the AI runs `hps code`. It smartly reads **only the relevant Halo technical docs** (e.g., *How to write a Reconciler*, *How to use UI Components*) and generates the code.
+Once approved, the AI runs `hps code` to load **relevant Halo docs** and generate code.
+
+---
+
+## 🧩 Feature Matrix
+
+| Feature | Status | AI Support | Level |
+| :--- | :---: | :--- | :---: |
+| Agentic Workflow | ✅ | **Cursor IDE** | L4 (Best) |
+| Smart Context | ✅ | **Gemini CLI** | L4 (Best) |
+| Seamless Launch | ✅ | GitHub Copilot | L2 |
+| i18n (En/Zh) | ✅ | Ollama | L2 |
 
 ---
 
 ## 🛠 Command Reference
 
-| Command | Description |
-| :--- | :--- |
-| `hps init [name]` | Initialize project, configure AI, and launch environment. |
-| `hps start` | Manually launch the AI environment (if you closed it). |
-| `hps new <feat>` | (Agent Use) Draft a feature specification. |
-| `hps code <feat>` | (Agent Use) Generate coding prompts with smart context. |
-
-## 🤝 Contributing
-
-We welcome contributions! Please fork the repository and submit a Pull Request.
+*   `hps init [name]`: Create project & setup AI context.
+*   `hps start`: Launch AI environment manually.
+*   `hps new <feat>`: (Agent) Draft a feature specification.
+*   `hps code <feat>`: (Agent) Generate code with smart context.
 
 ## 📄 License
 

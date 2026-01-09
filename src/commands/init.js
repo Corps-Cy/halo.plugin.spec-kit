@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { TaskRunner, selectOption, colors, log } = require('../core/ui');
+const { TaskRunner, selectOption, colors, log, BACK_SIGNAL } = require('../core/ui/index');
 const { getHaloContext, generateContextContent, HPS_DIR } = require('../core/utils');
 const templates = require('../data/templates');
 const { t, setLang, getLang } = require('../data/locales');
@@ -13,23 +13,26 @@ async function cmdInit(args) {
     let selectedTool = 'general';
     let pendingLaunch = null; 
 
-    // --- Step 1: Language (Visible) ---
+    // --- Step 1: Language ---
     runner.addTask(() => t('select_lang'), async () => {
         const langOptions = [
             { label: "中文 (Chinese)", value: "zh", description: "使用中文界面和提示词" },
             { label: "English", value: "en", description: "Use English interface and prompts" },
             { label: "日本語 (Japanese)", value: "ja", description: "日本語インターフェースとプロンプトを使用" }
         ];
-        const selectedLang = await selectOption(t('select_lang'), langOptions);
-        setLang(selectedLang);
+        const result = await selectOption(t('select_lang'), langOptions);
+        if (result === BACK_SIGNAL) return BACK_SIGNAL;
+        
+        setLang(result);
     });
 
-    // --- Background: Project Structure (Hidden) ---
+    // --- Hidden Tasks ---
     if (projectName) {
         targetDir = path.join(process.cwd(), projectName);
         runner.addTask(() => t('creating_project'), async () => {
-            if (fs.existsSync(targetDir)) throw new Error(`Directory ${projectName} already exists`);
-            fs.mkdirSync(targetDir, { recursive: true });
+            if (!fs.existsSync(targetDir)) {
+                fs.mkdirSync(targetDir, { recursive: true });
+            }
             
             const dirs = [
                 path.join('src/main/java/run/halo/plugin/', projectName.replace(/-/g, '')),
@@ -42,10 +45,9 @@ async function cmdInit(args) {
             fs.writeFileSync(path.join(targetDir, 'src/main/resources/plugin.yaml'), templates.pluginYaml(projectName));
             const javaPath = path.join(targetDir, `src/main/java/run/halo/plugin/${projectName.replace(/-/g, '')}/StarterPlugin.java`);
             fs.writeFileSync(javaPath, templates.javaClass(projectName));
-        }, true); // HIDDEN
+        }, true);
     }
 
-    // --- Background: KB (Hidden) ---
     runner.addTask(() => t('init_kb'), async () => {
         const hpsDir = path.join(targetDir, HPS_DIR);
         [
@@ -55,9 +57,9 @@ async function cmdInit(args) {
         ].forEach(d => fs.mkdirSync(d, { recursive: true }));
         
         fs.writeFileSync(path.join(hpsDir, 'project.md'), templates.hpsProjectSpec(projectName || 'MyPlugin'));
-    }, true); // HIDDEN
+    }, true);
 
-    // --- Step 2: AI Config (Visible) ---
+    // --- Step 2: AI Config ---
     runner.addTask(() => t('config_ai'), async () => {
         const options = [
             { label: "Gemini (Google)", value: "gemini", description: t('opt_gemini') },
@@ -68,13 +70,14 @@ async function cmdInit(args) {
             { label: "General", value: "general", description: t('opt_general') }
         ];
 
-        selectedTool = await selectOption(t('select_ai'), options);
-        
+        const result = await selectOption(t('select_ai'), options);
+        if (result === BACK_SIGNAL) return BACK_SIGNAL;
+
+        selectedTool = result;
         const config = { ai_tool: selectedTool, language: getLang(), project_name: projectName || 'existing' };
         fs.writeFileSync(path.join(targetDir, HPS_DIR, 'config.json'), JSON.stringify(config, null, 2));
     });
 
-    // --- Background: Gen Files (Hidden) ---
     runner.addTask(() => t('gen_files'), async () => {
         const contextData = getHaloContext(); 
         const fullContext = generateContextContent(contextData); 
@@ -96,29 +99,27 @@ async function cmdInit(args) {
             write(path.join(HPS_DIR, 'prompts/SYSTEM_INSTRUCTION.md'), prompt);
             
             if (selectedTool === 'ollama') {
-                const modelfile = `FROM llama3
-SYSTEM """
-${prompt}
-""`;
+                const modelfile = 'FROM llama3\nSYSTEM """\n' + prompt + '\n"""';
                 write(path.join(HPS_DIR, 'Modelfile'), modelfile);
             } else if (selectedTool === 'copilot') {
                 write('.github/copilot-instructions.md', prompt);
             }
         }
-    }, true); // HIDDEN
+    }, true);
 
-    // --- Step 3: Seamless Launch (Visible) ---
+    // --- Step 3: Launch ---
     runner.addTask(() => t('launching_ai_task'), async () => {
         if (selectedTool === 'general') return;
 
         const launchPrompt = t('launch_prompt').replace('{tool}', selectedTool);
         
-        const shouldLaunch = await selectOption(launchPrompt, [
+        const result = await selectOption(launchPrompt, [
             { label: t('launch_yes'), value: "yes", description: t('launch_yes_desc') },
             { label: t('launch_no'), value: "no", description: t('launch_no_desc') }
         ]);
+        if (result === BACK_SIGNAL) return BACK_SIGNAL;
 
-        if (shouldLaunch === 'yes') {
+        if (result === 'yes') {
             const msg = t('switching_context').replace('{dir}', targetDir);
             console.log(`\n${colors.cyan}${msg}${colors.reset}\n`);
             process.chdir(targetDir);

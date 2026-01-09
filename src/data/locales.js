@@ -38,6 +38,10 @@ const locales = {
         cmd_copied: "(Command copied to clipboard)",
         claude_tip: "Tip: In Claude, type '/add .hps/claude_context.md'",
 
+        // Nav Hints
+        nav_hint: "(Use ↑/↓ to navigate, Enter to select, ← to go back)",
+        nav_hint_first: "(Use ↑/↓ to navigate, Enter to select)",
+
         new_feature_title: "🆕 HPS: New Feature Proposal",
         enter_feature_name: "? Feature name (e.g., daily-checkin): ",
         feature_name_required: "Feature name is required.",
@@ -78,6 +82,10 @@ const locales = {
         cmd_copied: "(命令已复制到剪贴板)",
         claude_tip: "提示：在 Claude 中输入 '/add .hps/claude_context.md'。",
 
+        // Nav Hints
+        nav_hint: "(↑/↓ 选择, Enter 确认, ← 返回上一步)",
+        nav_hint_first: "(↑/↓ 选择, Enter 确认)",
+
         new_feature_title: "🆕 HPS: 新功能提案 (OpenSpec)",
         enter_feature_name: "? 功能名称 (例如: daily-checkin): ",
         feature_name_required: "必须输入功能名称。",
@@ -117,6 +125,10 @@ const locales = {
         manual_launch_tip: "⚠️  シェルの制限により、手动で実行してください：",
         cmd_copied: "(コマンドをクリップボードにコピーしました)",
         claude_tip: "ヒント：Claudeで '/add .hps/claude_context.md' と入力してください。",
+
+        // Nav Hints
+        nav_hint: "(↑/↓ 選択, Enter 決定, ← 戻る)",
+        nav_hint_first: "(↑/↓ 選択, Enter 決定)",
 
         new_feature_title: "🆕 HPS: 新機能の提案",
         enter_feature_name: "? 功能名称 (例: daily-checkin): ",

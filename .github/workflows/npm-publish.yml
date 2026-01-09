@@ -6,7 +6,7 @@ on:
       - main
 
 permissions:
-  contents: write # Allow creating releases
+  contents: write
 
 jobs:
   publish:
@@ -23,7 +23,7 @@ jobs:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Check Version & Set Output
+      - name: Check Version & Determine Tag
         id: check_version
         run: |
           VERSION=$(node -p "require('./package.json').version")
@@ -31,10 +31,19 @@ jobs:
           # Use || true to prevent failure if package doesn't exist yet
           NPM_VERSION=$(npm view "$NAME" version 2>/dev/null || echo "0.0.0")
           
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          
           echo "Current: $VERSION"
           echo "NPM: $NPM_VERSION"
+          
+          # Detect dist-tag (beta/rc -> next, stable -> latest)
+          if [[ "$VERSION" == *"-"* ]]; then
+            echo "TAG=next" >> $GITHUB_OUTPUT
+            echo "Detected Pre-release. Will publish to 'next' tag."
+          else
+            echo "TAG=latest" >> $GITHUB_OUTPUT
+            echo "Detected Stable release. Will publish to 'latest' tag."
+          fi
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
           
           if [ "$VERSION" != "$NPM_VERSION" ]; then
             echo "changed=true" >> $GITHUB_OUTPUT
@@ -44,8 +53,8 @@ jobs:
 
       - name: Publish to NPM
         if: steps.check_version.outputs.changed == 'true'
-        # Explicitly set access public for scoped packages
-        run: npm publish --access public
+        # Dynamically set the tag
+        run: npm publish --access public --tag ${{ steps.check_version.outputs.TAG }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -55,6 +64,8 @@ jobs:
         with:
           tag_name: v${{ steps.check_version.outputs.version }}
           name: v${{ steps.check_version.outputs.version }}
+          # Mark as pre-release if it's not 'latest'
+          prerelease: ${{ steps.check_version.outputs.TAG != 'latest' }}
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

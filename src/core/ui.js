@@ -25,51 +25,72 @@ class TaskRunner {
         this.tasks = [];
     }
 
-    addTask(name, fn) {
-        this.tasks.push({ name, fn });
+    // New: added 'hidden' parameter
+    addTask(nameFn, fn, hidden = false) {
+        this.tasks.push({ nameFn, fn, hidden });
     }
 
     async run() {
-        const total = this.tasks.length;
-        console.log(`\n${colors.bright}${colors.blue}🚀 Starting Workflow...${colors.reset}\n`);
+        // Only count non-hidden tasks for the total
+        const visibleTasks = this.tasks.filter(t => !t.hidden);
+        const totalSteps = visibleTasks.length;
+        let currentVisibleStep = 0;
 
-        const renderBar = (step, taskName) => {
+        console.log(`\n${colors.bright}${colors.blue}${t('start_workflow') || "🚀 Starting Workflow..."}${colors.reset}\n`);
+
+        const renderBar = (visibleStep, taskName) => {
             const barLength = 20;
-            const filled = Math.round((step / total) * barLength);
-            const bar = '█'.repeat(filled) + '░'.repeat(barLength - filled);
-            process.stdout.write(`\r\x1b[K${colors.cyan}[${bar}] Step ${step}/${total}:${colors.reset} ${colors.bright}${taskName}${colors.reset}`);
+            // Progress based on actual task index / total tasks
+            const totalTasks = this.tasks.length;
+            // But display Step X/Y based on manual steps
+            const filled = Math.round((visibleStep / totalSteps) * barLength);
+            const bar = '█'.repeat(Math.min(filled, 20)) + '░'.repeat(Math.max(0, 20 - filled));
+            
+            let safeName = taskName;
+            if (safeName.length > 40) safeName = safeName.substring(0, 37) + "...";
+
+            readline.clearLine(process.stdout, 0);
+            readline.cursorTo(process.stdout, 0);
+            
+            const stepInfo = visibleStep > 0 ? `Step ${visibleStep}/${totalSteps}:` : `Preparing:`
+            process.stdout.write(`${colors.cyan}[${bar}] ${stepInfo}${colors.reset} ${colors.bright}${safeName}${colors.reset}`);
         };
 
-        for (let i = 0; i < total; i++) {
+        for (let i = 0; i < this.tasks.length; i++) {
             const task = this.tasks[i];
-            const currentStep = i + 1;
-            const taskName = typeof task.name === 'function' ? task.name() : task.name;
+            const taskName = typeof task.nameFn === 'function' ? task.nameFn() : task.nameFn;
             
-            renderBar(currentStep, taskName);
+            if (!task.hidden) currentVisibleStep++;
             
-            const isInteractive = taskName.includes("Language") || taskName.includes("语言") || taskName === t('config_ai');
+            renderBar(currentVisibleStep, taskName);
+            
+            const isInteractive = taskName && (taskName.includes("Select") || taskName.includes("选择") || taskName.includes("言語") || taskName.includes("AI") || taskName.includes("启动") || taskName.includes("Launch"));
 
             try {
                 if (isInteractive) {
-                     process.stdout.write('\x1b7\n'); 
+                     readline.clearLine(process.stdout, 0);
+                     readline.cursorTo(process.stdout, 0);
                      await task.fn();
-                     process.stdout.write('\x1b8');
                 } else {
                     await task.fn();
+                    await new Promise(r => setTimeout(r, 400));
                 }
             } catch (e) {
                 process.stdout.write(`\n${colors.red}✖ ${t('task_failed')}: ${e.message}${colors.reset}\n`);
-                console.error(e);
                 process.exit(1);
             }
         }
         
-        process.stdout.write('\n');
-        console.log(`${colors.green}✔ ${t('init_complete')}${colors.reset}\n`);
+        const fullBar = '█'.repeat(20);
+        readline.clearLine(process.stdout, 0);
+        readline.cursorTo(process.stdout, 0);
+        process.stdout.write(`${colors.cyan}[${fullBar}] ${t('init_complete')}${colors.reset}\n\n`);
     }
 }
 
 function selectOption(question, options) {
+    if (!options || !Array.isArray(options)) process.exit(1);
+
     return new Promise((resolve) => {
         let selectedIndex = 0;
         const { stdin, stdout } = process;
@@ -83,15 +104,15 @@ function selectOption(question, options) {
         const palette = {
             reset: "\x1b[0m",
             bold: "\x1b[1m",
-            dim: "\x1b[90m",
+            dim: "\x1b[2m",
             white: "\x1b[37m",
             cyan: "\x1b[36m",
             magenta: "\x1b[35m",
             green: "\x1b[32m",
             yellow: "\x1b[33m"
         };
-        const neonColors = [palette.cyan, palette.magenta, palette.green, palette.yellow];
-        options.forEach(opt => opt.descColor = neonColors[Math.floor(Math.random() * neonColors.length)]);
+        
+        options.forEach(opt => opt.descColor = palette.cyan);
         
         let firstRender = true;
 
@@ -113,13 +134,15 @@ function selectOption(question, options) {
         console.log(`${colors.bright}${question}${colors.reset}`);
         render();
 
-        stdin.setRawMode(true);
-        stdin.resume();
-        stdin.setEncoding('utf8');
+        if (stdin.isTTY) {
+            stdin.setRawMode(true);
+            stdin.resume();
+            stdin.setEncoding('utf8');
+        }
 
         function cleanup() {
             stdout.write(cursorShow);
-            stdin.setRawMode(false);
+            if (stdin.isTTY) stdin.setRawMode(false);
             stdin.pause();
             stdin.removeListener('data', handleKey);
         }
@@ -134,9 +157,4 @@ function selectOption(question, options) {
     });
 }
 
-module.exports = {
-    colors,
-    log,
-    TaskRunner,
-    selectOption
-};
+module.exports = { colors, log, TaskRunner, selectOption };

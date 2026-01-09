@@ -44,7 +44,7 @@ npm install -g .
 ```bash
 hps init my-awesome-plugin
 ```
-*Follow the wizard to setup 'zh/en' and your AI tool. HPS will auto-launch the AI for you.*
+*Follow the wizard to setup 'zh/en/ja' and your AI tool. HPS will auto-launch the AI for you.*
 
 ### 2. "I want a feature..."
 In your AI Chat (Cursor/Gemini), just say:
@@ -64,8 +64,8 @@ Once approved, the AI runs `hps code` to load **relevant Halo docs** and generat
 | :--- | :---: | :--- | :---: |
 | Agentic Workflow | ✅ | **Cursor IDE** | L4 (Best) |
 | Smart Context | ✅ | **Gemini CLI** | L4 (Best) |
-| Seamless Launch | ✅ | GitHub Copilot | L2 |
-| i18n (En/Zh) | ✅ | Ollama | L2 |
+| Seamless Launch | ✅ | **Claude Code** | L3 (Beta) |
+| i18n (En/Zh/Ja) | ✅ | GitHub Copilot | L2 |
 
 ---
 

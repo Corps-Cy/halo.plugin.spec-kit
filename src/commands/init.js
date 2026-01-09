@@ -11,21 +11,23 @@ async function cmdInit(args) {
     const projectName = args[0]; 
     let targetDir = process.cwd();
     let selectedTool = 'general';
+    let pendingLaunch = null; 
 
-    // --- Step 1: Language Selection ---
-    runner.addTask("Language Setup / 语言设置", async () => {
+    // --- Step 1: Language (Visible) ---
+    runner.addTask(() => t('select_lang'), async () => {
         const langOptions = [
             { label: "中文 (Chinese)", value: "zh", description: "使用中文界面和提示词" },
-            { label: "English", value: "en", description: "Use English interface and prompts" }
+            { label: "English", value: "en", description: "Use English interface and prompts" },
+            { label: "日本語 (Japanese)", value: "ja", description: "日本語インターフェースとプロンプトを使用" }
         ];
-        const selectedLang = await selectOption("Please select language / 请选择语言:", langOptions);
+        const selectedLang = await selectOption(t('select_lang'), langOptions);
         setLang(selectedLang);
     });
 
-    // --- Step 2: Project Structure (if name provided) ---
+    // --- Background: Project Structure (Hidden) ---
     if (projectName) {
         targetDir = path.join(process.cwd(), projectName);
-        runner.addTask(() => `${t('creating_project')}: ${projectName}`, async () => {
+        runner.addTask(() => t('creating_project'), async () => {
             if (fs.existsSync(targetDir)) throw new Error(`Directory ${projectName} already exists`);
             fs.mkdirSync(targetDir, { recursive: true });
             
@@ -40,10 +42,10 @@ async function cmdInit(args) {
             fs.writeFileSync(path.join(targetDir, 'src/main/resources/plugin.yaml'), templates.pluginYaml(projectName));
             const javaPath = path.join(targetDir, `src/main/java/run/halo/plugin/${projectName.replace(/-/g, '')}/StarterPlugin.java`);
             fs.writeFileSync(javaPath, templates.javaClass(projectName));
-        });
+        }, true); // HIDDEN
     }
 
-    // --- Step 3: HPS Knowledge Base Init ---
+    // --- Background: KB (Hidden) ---
     runner.addTask(() => t('init_kb'), async () => {
         const hpsDir = path.join(targetDir, HPS_DIR);
         [
@@ -52,17 +54,18 @@ async function cmdInit(args) {
             path.join(hpsDir, 'prompts')
         ].forEach(d => fs.mkdirSync(d, { recursive: true }));
         
-        // Generate Project Spec
         fs.writeFileSync(path.join(hpsDir, 'project.md'), templates.hpsProjectSpec(projectName || 'MyPlugin'));
-    });
+    }, true); // HIDDEN
 
-    // --- Step 4: AI Configuration ---
+    // --- Step 2: AI Config (Visible) ---
     runner.addTask(() => t('config_ai'), async () => {
         const options = [
             { label: "Gemini (Google)", value: "gemini", description: t('opt_gemini') },
             { label: "Cursor IDE", value: "cursor", description: t('opt_cursor') },
-            { label: "Claude Code", value: "claude", description: "Launch with Claude CLI" },
-            { label: "General (Skip)", value: "general", description: t('opt_general') }
+            { label: "Claude Code", value: "claude", description: t('opt_claude') },
+            { label: "GitHub Copilot", value: "copilot", description: t('opt_copilot') },
+            { label: "Ollama / Local LLM", value: "ollama", description: t('opt_ollama') },
+            { label: "General", value: "general", description: t('opt_general') }
         ];
 
         selectedTool = await selectOption(t('select_ai'), options);
@@ -71,7 +74,7 @@ async function cmdInit(args) {
         fs.writeFileSync(path.join(targetDir, HPS_DIR, 'config.json'), JSON.stringify(config, null, 2));
     });
 
-    // --- Step 5: Generate Context Files ---
+    // --- Background: Gen Files (Hidden) ---
     runner.addTask(() => t('gen_files'), async () => {
         const contextData = getHaloContext(); 
         const fullContext = generateContextContent(contextData); 
@@ -87,41 +90,48 @@ async function cmdInit(args) {
             const rules = templates.cursorRules(getLang()) + "\n\n" + fullContext;
             write('.cursorrules', rules);
         } else {
-            // General / Gemini / Claude
             const hpsContext = templates.hpsMd(projectName || 'halo-plugin');
             write('HPS.md', hpsContext + "\n\n" + fullContext);
             const prompt = templates.systemPrompt(getLang()) + "\n\n" + fullContext;
             write(path.join(HPS_DIR, 'prompts/SYSTEM_INSTRUCTION.md'), prompt);
+            
+            if (selectedTool === 'ollama') {
+                const modelfile = `FROM llama3
+SYSTEM """
+${prompt}
+""`;
+                write(path.join(HPS_DIR, 'Modelfile'), modelfile);
+            } else if (selectedTool === 'copilot') {
+                write('.github/copilot-instructions.md', prompt);
+            }
+        }
+    }, true); // HIDDEN
+
+    // --- Step 3: Seamless Launch (Visible) ---
+    runner.addTask(() => t('launching_ai_task'), async () => {
+        if (selectedTool === 'general') return;
+
+        const launchPrompt = t('launch_prompt').replace('{tool}', selectedTool);
+        
+        const shouldLaunch = await selectOption(launchPrompt, [
+            { label: t('launch_yes'), value: "yes", description: t('launch_yes_desc') },
+            { label: t('launch_no'), value: "no", description: t('launch_no_desc') }
+        ]);
+
+        if (shouldLaunch === 'yes') {
+            const msg = t('switching_context').replace('{dir}', targetDir);
+            console.log(`\n${colors.cyan}${msg}${colors.reset}\n`);
+            process.chdir(targetDir);
+            pendingLaunch = selectedTool;
         }
     });
 
     await runner.run();
     
-    // --- Step 6: Seamless Launch (New Feature) ---
-    if (selectedTool !== 'general') {
-        const shouldLaunch = await selectOption(`
-✨ Setup Complete! Launch ${selectedTool} environment now?`, [
-            { label: "Yes, launch it! 🚀", value: "yes", description: "Start developing immediately" },
-            { label: "No, later", value: "no", description: "I will run 'hps start' later" }
-        ]);
-
-        if (shouldLaunch === 'yes') {
-            console.log(`
-${colors.cyan}Switching context to ${targetDir}...${colors.reset}`);
-            try {
-                process.chdir(targetDir);
-                await cmdStart([selectedTool]); // Invoke start logic directly
-            } catch (err) {
-                log.error(`Failed to launch: ${err.message}`);
-            }
-            return; // Exit after launch
-        }
-    }
-
-    if (projectName) {
-        console.log(`
-${colors.green}${t('project_ready')} cd ${projectName}${colors.reset}`);
-        console.log(`${colors.dim}Run 'hps start' to begin whenever you are ready.${colors.reset}`);
+    if (pendingLaunch) {
+        await cmdStart([pendingLaunch]);
+    } else if (projectName) {
+        console.log(`${colors.green}${t('project_ready')} cd ${projectName}${colors.reset}`);
     }
 }
 

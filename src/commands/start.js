@@ -1,74 +1,75 @@
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
-const { colors, log } = require('../core/ui');
-const { loadHpsConfig } = require('../core/utils');
+const { colors, log, selectOption } = require('../core/ui');
+const { HPS_DIR, getHaloContext, generateContextContent, readFileSafe, loadHpsConfig, copyToClipboard } = require('../core/utils');
+const templates = require('../data/templates');
+const { t } = require('../data/locales');
 
 async function cmdStart(args) {
     const config = loadHpsConfig();
-    const tool = (args && args[0]) || config.ai_tool || 'gemini';
 
-    // 1. Check if tool is supported
-    // For now we mainly support 'gemini' CLI as it accepts prompt via args nicely
-    if (tool !== 'gemini' && tool !== 'ollama') {
-        log.info(`Tool '${tool}' usually runs as a standalone app or plugin.`);
-        console.log(`Please open your AI tool manually and ensure it reads the context from 'HPS.md' or '.hps/prompts/SYSTEM_INSTRUCTION.md'.`);
-        return;
+    // 1. Determine AI Tool
+    let aiTool = (args && args[0]) || config.ai_tool;
+    if (!aiTool || aiTool === 'general') {
+        aiTool = await selectOption(t('select_ai'), [
+            { label: "Google Gemini CLI", value: "gemini", description: "Requires 'gemini' in PATH" },
+            { label: "Claude Code", value: "claude", description: "Requires 'claude' in PATH" },
+            { label: "Cursor", value: "cursor", description: "Opens project in Cursor" }
+        ]);
     }
 
     // 2. Prepare Context
-    const contextPath = path.join(process.cwd(), 'HPS.md');
-    if (!fs.existsSync(contextPath)) {
-        log.error("HPS.md not found. Did you run 'hps init'?");
-        return;
+    if (!fs.existsSync('HPS.md')) {
+        const projectName = config.project_name || path.basename(process.cwd());
+        fs.writeFileSync('HPS.md', templates.hpsMd(projectName));
     }
-
-    let contextContent = fs.readFileSync(contextPath, 'utf8');
+    const hpsInstructions = readFileSafe('HPS.md');
+    const contextData = getHaloContext(); 
+    const technicalContext = generateContextContent(contextData); 
+    const fullPrompt = `${hpsInstructions}\n\n${technicalContext}`;
 
     // 3. Launch Tool
-    console.log(`${colors.cyan}🚀 Launching ${tool} with HPS Context...${colors.reset}`);
-    console.log(`${colors.dim}(Context size: ${contextContent.length} chars)${colors.reset}\n`);
+    console.log(`${colors.bright}${t('launching_ai')}: ${aiTool}...${colors.reset}`);
 
-    let cmd = tool;
-    let cmdArgs = [];
+    if (aiTool === 'cursor') {
+        const lang = config.language || 'en';
+        const cursorRules = templates.cursorRules(lang) + "\n\n" + technicalContext; 
+        fs.writeFileSync('.cursorrules', cursorRules);
+        spawn('cursor', ['.'], { stdio: 'inherit', shell: true });
+    } 
+    else if (aiTool === 'gemini') {
+        // --- NEW ROBUST STRATEGY FOR GEMINI ---
+        // We avoid shell pipes like 'cat | gemini' which are brittle.
+        // Instead, we spawn gemini and manually write to its stdin.
+        
+        console.log(`${colors.cyan}ℹ Injecting context into Gemini session...${colors.reset}`);
 
-    if (tool === 'gemini') {
-        // Gemini CLI: gemini "system prompt"
-        // Note: Depending on the specific 'gemini' CLI implementation installed by user,
-        // the way to pass system prompt might vary. Assuming standard args[0] is prompt.
-        cmdArgs = [contextContent];
-    } else if (tool === 'ollama') {
-        // Ollama: ollama run llama3 "prompt"
-        // Or run interactive. Ollama is tricky to inject system prompt via CLI arg for interactive session.
-        // We assume user has created a Modelfile via 'hps init' and we just run that model.
-        // But 'hps init' just writes the file. User needs to 'ollama create'.
-        // Let's keep it simple: Just run 'ollama run llama3' and paste context?
-        // Or tell user to run 'ollama run hps-agent' if they built it.
-        log.info("For Ollama, please ensure you have built the model using 'ollama create hps -f .hps/Modelfile'");
-        cmd = 'ollama';
-        cmdArgs = ['run', 'hps'];
+        const child = spawn('gemini', [], {
+            stdio: ['pipe', 'inherit', 'inherit'], // Pipe STDIN, inherit STDOUT/STDERR
+            shell: true
+        });
+
+        // Write context
+        child.stdin.write(fullPrompt + '\n');
+        
+        // CRITICAL: Connect our terminal's stdin to Gemini's stdin
+        // so you can keep typing.
+        process.stdin.pipe(child.stdin);
+
+        child.on('exit', (code) => {
+            process.exit(code);
+        });
     }
-
-    // Cross-platform spawn
-    const isWin = process.platform === 'win32';
-    
-    const child = spawn(cmd, cmdArgs, {
-        stdio: 'inherit', // Connect stdin/stdout directly to parent terminal
-        shell: isWin // Use shell on Windows to resolve commands
-    });
-
-    child.on('error', (err) => {
-        log.error(`Failed to start ${tool}: ${err.message}`);
-        if (err.code === 'ENOENT') {
-            console.log(`${colors.yellow}Tip: Is '${tool}' installed and in your PATH?${colors.reset}`);
-        }
-    });
-
-    child.on('close', (code) => {
-        if (code !== 0) {
-            console.log(`${colors.dim}${tool} exited with code ${code}${colors.reset}`);
-        }
-    });
+    else if (aiTool === 'claude') {
+        const tempContextPath = path.join(HPS_DIR, 'claude_context.md');
+        fs.writeFileSync(tempContextPath, fullPrompt);
+        console.log(`${colors.yellow}${t('claude_tip')}${colors.reset}`);
+        spawn('claude', [], { stdio: 'inherit', shell: true });
+    }
+    else {
+        log.error(`Unknown tool: ${aiTool}`);
+    }
 }
 
 module.exports = cmdStart;
